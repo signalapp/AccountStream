@@ -1,0 +1,36 @@
+micronaut:
+  application:
+    name: accountstream
+  metrics:
+    export:
+      datadog:
+        enabled: false
+        apiKey: ${DATADOG_APIKEY:}
+        step: PT1M
+
+aws:
+  region: "us-east-1"
+
+logger:
+  levels:
+    org.signal: TRACE
+    io.micronaut: INFO
+
+grpc:
+  server:
+    port: 50052
+
+accountdb:
+  tablename: "accounts"
+  streamname: "Foo.kinesis.Stream"
+  read-parallelism: 2
+  segments: 4
+
+datadog-environment: test
+
+endpoints:
+  all:
+    path: "/admin"
+    port: 8081
+  health:
+    enabled: true

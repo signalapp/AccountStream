@@ -1,0 +1,6 @@
+applicationType: grpc
+defaultPackage: org.signal
+testFramework: junit
+sourceLanguage: java
+buildTool: maven
+features: [annotation-api, app-name, aws-v2-sdk, grpc, java, java-application, junit, maven, readme, shade, slf4j-simple, yaml]

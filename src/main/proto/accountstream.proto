@@ -1,0 +1,63 @@
+//
+// Copyright 2022 Signal Messenger, LLC
+// SPDX-License-Identifier: AGPL-3.0-only
+//
+
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "org.signal.accountstream.proto";
+
+package org.signal;
+
+// Each shard provides a range, based on the sharding strategy requested.
+message Shard {
+  bytes start = 1;  // if empty, means "beginning of strategy range"
+  bytes limit = 2;  // if empty, means "end of strategy range"
+}
+
+// Internal representation of continuation tokens.  Only ever handled server-
+// side; clients should simply store the byte representation of this, then
+// pass it back upon a new stream start.
+message ContinuationTokenInternal {
+  map<string, string> shard_horizon_sequence_numbers = 2;
+}
+
+// Request that data be streamed to me such that I achieve a complete
+// dataset which I can serve, which includes all data for the set of
+// shards I've provided.
+message AccountDataRequest {
+  Shard shard = 2;  // data shard (uuid range)
+
+  // [last_continuation_token] is the last token I received from any other
+  // server call that I still have my state for.  This token is specific
+  // to a sharding strategy and set of shards, so if those change, this
+  // token should be cleared and resent as empty.
+  bytes last_continuation_token = 3;
+}
+
+message AccountDataStream {
+  message Record {
+    int64 e164 = 1;
+    bytes aci = 2;  // if empty, should be removed
+    bytes pni = 3;
+    bytes uak = 4;
+  }
+  // `last_continuation_token` was too old, or some other state
+  // necessitates that all state on the client-side should be
+  // cleared before new records are added in.
+  bool clear_all = 1;
+  // records to serve
+  repeated Record records = 2;
+  // `continuation_token` should be saved, and subsequent streaming
+  // requests should set `last_continuation_token`.
+  bytes continuation_token = 3;
+  // If `dataset_current` is set, then the data served so far,
+  // possibly including the data the client had before, is considered
+  // complete and current, and the receiver may start serving it.
+  bool dataset_current = 4;
+}
+
+service AccountStreamService {
+  rpc StreamAccountData(AccountDataRequest) returns (stream AccountDataStream) {}
+}
